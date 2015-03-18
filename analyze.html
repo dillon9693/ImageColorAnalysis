@@ -1,0 +1,222 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta name="description" content="HSV Image Processor" />
+    <meta name="author" content="Dillon Kerr" />
+	
+    <link rel="stylesheet" type="text/css" href="default.css" />
+	
+	<script src="rgb-hsv_converter.js"></script>
+	<script type="text/javascript">
+		
+		var sliderValue = 0.5; //original slider value
+		var right = .65; //original right bound of slider
+		var left = .35; //original left bound of slider
+		
+		//changes slider value and left and right bound value
+		function showValue(newValue){
+		   sliderValue = newValue;
+		   left = (newValue - .15);
+		   right = (left + .3);
+			 console.log(right + "||" + left);
+     	   //document.getElementById("sub_header").innerHTML = "<h2>"+Math.floor(newValue*100)/100+"</h2><h3>"+Math.floor(left*100)/100+"</h3><h3>"+Math.floor(right*100)/100+"</h3>";
+		}
+	
+		//draws modified image onto right canvas
+	  function drawHSV() {
+			var canv2 = document.getElementById("canvas2"); //gets right canvas
+			var c = canv2.getContext("2d");
+			var img1 = new Image();
+			var w,h;
+			
+			img1.onload = function(){
+			  //get image's width and height
+			  w = this.width;
+			  h = this.height;
+			  // resize the canvas to the new image size			  
+			  canv2.width = w;
+			  canv2.height = h;
+			  
+			  //draws original image
+			  c.drawImage(img1,0,0);
+			  
+			  //gets original image's image data
+			  img1 = c.getImageData(0,0,w,h);
+			  var pix = img1.data;
+			  //loops through each pixel of the image
+			  for(var y = 0; y < pix.length; y+=4) {
+			      var arr = rgbToHsv(pix[y],pix[y+1],pix[y+2]);
+			      if(arr[0] < left || arr[0] > right){ //if pixel does not have color in slider's bounds
+				      //change pixel color to black
+					  pix[y] = 0;
+					  pix[y+1] = 0;
+					  pix[y+2] = 0;
+				  }
+			  }
+			  //put modified image data onto canvas
+			  c.putImageData(img1, 0, 0);
+			  
+			  //draw name in top left of canvas
+			  c.fillStyle='cyan';
+			  c.font='italic 50px sans-serif';
+			  c.textBaseline='top';
+			  c.fillText('Dillon Kerr', 0, 0);
+			  
+			  //draw left edge colored circle
+				console.log("Draw: "+ left +"||"+right);
+			  var a = hsvToRgb(left, 1, 1);
+			  var x = RGBtoHex(a[0],a[1],a[2]);
+			  c.fillStyle=x;
+			  c.strokeStyle="black";
+			  c.lineWidth=15;
+			  c.beginPath();
+			  c.arc(275, 30, 30, 0, Math.PI*2, true);
+			  c.closePath();
+			  c.fill();
+			  c.stroke();
+			  
+			  //draw right edge colored circle
+			  var b = hsvToRgb(right, 1, 1);
+			  var z = RGBtoHex(b[0],b[1],b[2]);
+			  c.fillStyle=z;
+			  c.strokeStyle="black";
+			  c.lineWidth=15;
+			  c.beginPath();
+			  c.arc(350, 30, 30, 0, Math.PI*2, true);
+			  c.closePath();
+			  c.fill();
+			  c.stroke();
+
+			}
+		    var x = document.getElementById("mySelect");
+			img1.src = x.options[x.selectedIndex].text; //gets selection from drop down menu
+		}
+		
+		//draws selected image on left canvas
+        function draw() {  
+          var canv=document.getElementById("canvas1");
+          var c=canv.getContext("2d"); 
+          var img = new Image();  
+          var w, h;  
+		  
+          img.onload = function(){ 
+		   	//get image's width and height		  
+            h = this.height;
+            w = this.width;
+			// resize the canvas to the new image size
+            canv.width = w;
+            canv.height = h;
+			  
+			//draw image on canvas
+            c.drawImage(img, 0, 0, w, h );
+			  
+			//draw name in top left of canvas
+		    c.fillStyle='cyan';
+		    c.font='italic 50px sans-serif';
+		    c.textBaseline='top';
+		    c.fillText('Dillon Kerr', 0, 0);			  
+          } 
+		  var x = document.getElementById("mySelect");
+	      img.src = x.options[x.selectedIndex].text; //get selected image from drop down menu
+        } 	
+		
+		//dynamically populates the drop down menu from "data.txt"
+		function populate() {
+		  xmlhttp=new XMLHttpRequest( );
+		  xmlhttp.open("GET", "data.txt", false);
+		  xmlhttp.send( );
+		  xmlDoc=xmlhttp.responseText;
+		  var c = xmlDoc.split("\n");
+		  for(var j=0; j<c.length; j++) {
+			document.getElementById("mySelect").innerHTML += "<option>" + c[j] + "</option>";
+		  }
+	    }
+		
+		//converts rgb value to hex
+		function RGBtoHex(R,G,B) {
+		  return toHex(R)+toHex(G)+toHex(B)
+		}
+		function toHex(N) {
+		  if (N==null) return "00";
+		  N=parseInt(N); if (N==0 || isNaN(N)) return "00";
+		  N=Math.max(0,N); N=Math.min(N,255); N=Math.round(N);
+		  return "0123456789ABCDEF".charAt((N-N%16)/16) + "0123456789ABCDEF".charAt(N%16);
+		}
+		
+      </script>  
+  </head>
+  <body>
+   <div id="d1">
+      <div id="header">
+	  <header id="h1">
+		<h2 id="test">Image Color Analysis - COM214</h2>
+	  </header>
+	  </div>
+	  
+	  <div id="left">
+	   <article id="a1">
+	     <canvas id="canvas1">
+		   Your browser does not support the canvas element.
+		 </canvas>
+	   </article>
+	  </div>
+	  
+	  <div id="right">
+	   <article id="a2">
+	     <canvas id="canvas2" >
+		   Your browser does not support the canvas element.
+		 </canvas>
+	   </article>
+	  </div>
+	  
+	  <div id="bottom">
+	    <article id="a3">
+	      <section id="sect1">
+		    <input type="range" id="slider" min="0" max="1" value="0.5" step=".01" onchange='showValue(this.value)' /> 
+		    <canvas id="myCanvas">
+			  Your browser does not support the canvas element.
+		    </canvas>
+	
+		    <script type="text/javascript">
+		      //creates HSV spectrum below the slider
+			  var canv=document.getElementById("myCanvas");
+			  var c=canv.getContext("2d");
+
+			  var w = 250;
+			  var h = 20;
+
+			  var imgd = c.createImageData(w, h);
+			  var pix = imgd.data;
+
+			  var i=0;
+
+			  for(var y = 0; y < h; y++) 
+			    for (var x = 0; x < w; x++, i+=4){
+				  rgbCol = hsvToRgb(x/w, 1, 1);
+				  pix[i  ] = rgbCol[0]; 	// red channel
+				  pix[i+1] = rgbCol[1];  	// blue channel
+				  pix[i+2] = rgbCol[2];  	// green channel
+				  pix[i+3] = 255; 		// alpha channel
+				}		
+			  c.putImageData(imgd, 0, 0);
+			
+		    </script>
+		  </section>
+		  <button id="button" type="button" onClick="draw();drawHSV();">Display Image</button>
+		
+		  <div id="d3">
+		    <form>
+		      Select image:
+		      <select id="mySelect">
+			    <script>
+			      populate();
+			    </script>
+		      </select>
+		    <br /><br />
+		    <h2 id="listText"> </h2>
+		  </div>
+	    </article>
+	  </div>
+	</div>
+  </body>
+</html>
